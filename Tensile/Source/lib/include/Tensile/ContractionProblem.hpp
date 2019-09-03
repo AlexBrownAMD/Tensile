@@ -244,7 +244,7 @@ namespace Tensile
         using AlphaType = Alpha;
         using BetaType = Beta;
 
-        TypedContractionInputs();
+        __host__ TypedContractionInputs();
         TypedContractionInputs(A const* _a, B const* _b, C const* _c, D * _d,
                                Alpha _alpha, Beta _beta);
         ~TypedContractionInputs();
