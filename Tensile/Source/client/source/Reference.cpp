@@ -105,17 +105,16 @@ namespace Tensile
                   typename TypeR>
         inline Accumulator multiply(TypeL l, TypeR r)
         {
-            /* Transform the data type from TypeL/TypeR to Accumulator if TypeL!=ACC or TypeR!=ACC, but filter out cases, I8/I32/I32 and I8x4/I32/I32
+            /* Transform the data type from TypeL/TypeR to Accumulator if TypeL!=ACC or TypeR!=ACC, but filter out cases, I8/I32/I32
              *
              * There are three cases of doing multiplication and their conditions to do transform or not are as below.
-             * 1. AxB : (A!=ACC or B!=ACC) and A!=I8 and A!=I8x4
+             * 1. AxB : (A!=ACC or B!=ACC) and A!=I8
              * 2. Alpha x rC :  (Alpha!=ACC or rC!=ACC)
              * 3. Beta x C : (Beta!=ACC or C!=ACC)
             */
             constexpr bool needAccumCast
                 = !(std::is_same<TypeL, Accumulator>() && std::is_same<TypeR, Accumulator>())
-                  && !std::is_same<TypeL, Int8>() //case I8/I32/I32, I8 be implicitly cast to int.
-                  && !std::is_same<TypeL, Int8x4>(); //case I8x4/I32/I32, I8x4 overloading the op*.
+                  && !std::is_same<TypeL, Int8>(); //case I8/I32/I32, I8 be implicitly cast to int.
 
             using LMultT = std::conditional_t<needAccumCast, Accumulator, TypeL>;
             using RMultT = std::conditional_t<needAccumCast, Accumulator, TypeR>;
@@ -437,13 +436,6 @@ namespace Tensile
                     problem, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_HALF
-            case ContractionInputs_I8x4_I32_I32::TypeId():
-            {
-                auto const& typedInputs
-                    = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
-                return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPU(
-                    problem, typedInputs, validationStride);
-            }
             case ContractionInputs_I32_I32_I32::TypeId():
             {
                 auto const& typedInputs

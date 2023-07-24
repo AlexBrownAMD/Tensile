@@ -608,7 +608,6 @@ def writeClientParameters(forBenchmark, solutions, problemSizes, stepName, \
   h += "#ifdef Tensile_ENABLE_HALF\n"
   h += "    ,enum_TensileHalf\n"
   h += "#endif\n"
-  h += "    ,enum_TensileInt8x4\n"
   h += "    ,enum_TensileInt32\n"
   h += "    ,enum_tensile_bfloat16\n"
   h += "} DataTypeEnum;\n"
@@ -745,10 +744,7 @@ def writeClientParameters(forBenchmark, solutions, problemSizes, stepName, \
     h += ", %u" % dataType.numBytes()
   h += " };\n"
   # flops per mac
-  if dataTypes[0].isInt8x4():
-    h += "const unsigned int numFlopsPerMac[numDataTypes] = { %u" % (8 if dataTypes[0].isReal() else 32)
-  else:
-    h += "const unsigned int numFlopsPerMac[numDataTypes] = { %u" % (2 if dataTypes[0].isReal() else 8)
+  h += "const unsigned int numFlopsPerMac[numDataTypes] = { %u" % (2 if dataTypes[0].isReal() else 8)
   for dataTypeIdx in range(1, numDataTypes):
     dataType = dataTypes[dataTypeIdx]
     h += ", %u" % (2 if dataType.isReal() else 8)

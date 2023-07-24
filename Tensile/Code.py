@@ -642,19 +642,6 @@ class  MacInst (Inst):
         else:
           raise NotImplementedError("Half-precision not supported for arch=%u" % self.version )
 
-      # integer i8x4
-      elif self.kernel["ProblemType"]["DataType"].isInt8x4():
-        if self.version == (8,0,3):
-          kStr += "// int8 not implemented yet for gfx803:"
-        elif self.version == (9,0,0):
-          kStr += "// int8 not implemented yet for gfx900:"
-        elif self.version == (9,0,6):
-          for iui in range(0, self.innerUnroll):
-            cidx = self.aIdx + self.bIdx*self.kernel["ThreadTile0"] + 0
-            cStr = "v[%s+%u+%u*%u]" % ("vgprValuC", self.aIdx, self.bIdx, self.kernel["ThreadTile0"])
-            aStr = "v[%s+%u]"       % ("vgprValuA_X%u_I%u"%(self.PLR,iui), self.aIdx)
-            bStr = "v[%s+%u]"       % ("vgprValuB_X%u_I%u"%(self.PLR,iui), self.bIdx)
-            kStr += "v_dot4_i32_i8  %s, %s, %s, %s op_sel:[0,0] op_sel_hi:[1,1] //valuC[%u]%s" % (cStr, aStr, bStr, cStr, cidx, self.endLine)
       # single precision
       elif self.kernel["ProblemType"]["DataType"].isSingle():
         for iui in range(0, self.innerUnroll):

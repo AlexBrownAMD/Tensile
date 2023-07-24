@@ -897,75 +897,6 @@ namespace Tensile
         }
 
         template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::Zero>()
-        {
-            return Int8x4{0, 0, 0, 0};
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::One>()
-        {
-            return Int8x4{1, 1, 1, 1};
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::Two>()
-        {
-            return Int8x4{2, 2, 2, 2};
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::NegOne>()
-        {
-            return Int8x4{-1, -1, -1, -1};
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::Max>()
-        {
-            return Int8x4{127, 127, 127, 127};
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::DenormMin>()
-        {
-            throw std::runtime_error("DenormMin not available for Int8x4.");
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::DenormMax>()
-        {
-            throw std::runtime_error("DenormMax not available for Int8x4.");
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::NaN>()
-        {
-            throw std::runtime_error("NaN not available for Int8x4.");
-        }
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::Inf>()
-        {
-            throw std::runtime_error("Inf not available for Int8x4.");
-        }
-
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::Random>()
-        {
-            return Int8x4{static_cast<int8_t>((rand() % 7) - 3),
-                          static_cast<int8_t>((rand() % 7) - 3),
-                          static_cast<int8_t>((rand() % 7) - 3),
-                          static_cast<int8_t>((rand() % 7) - 3)};
-        }
-
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::BadInput>()
-        {
-            auto val = std::numeric_limits<int8_t>::max();
-            return Int8x4{val, val, val, val};
-        }
-
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::BadOutput>()
-        {
-            auto val = std::numeric_limits<int8_t>::min();
-            return Int8x4{val, val, val, val};
-        }
-
-        template <>
         inline Half DataInitialization::getValue<Half, InitMode::Zero>()
         {
             return static_cast<Half>(0);
@@ -1447,12 +1378,6 @@ namespace Tensile
         }
 
         template <>
-        inline bool DataInitialization::isBadInput<Int8x4>(Int8x4 value)
-        {
-            return value == DataInitialization::getValue<Int8x4, InitMode::BadInput>();
-        }
-
-        template <>
         inline bool DataInitialization::isBadInput<Half>(Half value)
         {
             return std::isnan(static_cast<float>(value));
@@ -1511,12 +1436,6 @@ namespace Tensile
         inline bool DataInitialization::isBadOutput<int32_t>(int32_t value)
         {
             return value == DataInitialization::getValue<int32_t, InitMode::BadOutput>();
-        }
-
-        template <>
-        inline bool DataInitialization::isBadOutput<Int8x4>(Int8x4 value)
-        {
-            return value == DataInitialization::getValue<Int8x4, InitMode::BadOutput>();
         }
 
         template <>
@@ -1596,12 +1515,6 @@ namespace Tensile
         inline int32_t DataInitialization::getTrigValue<int32_t>(int idx, bool useCos, bool useAbs)
         {
             throw std::runtime_error("Trig not available for int32_t.");
-        }
-
-        template <>
-        inline Int8x4 DataInitialization::getTrigValue<Int8x4>(int idx, bool useCos, bool useAbs)
-        {
-            throw std::runtime_error("Trig not available for Int8x4.");
         }
 
         template <>
@@ -1813,12 +1726,6 @@ namespace Tensile
         inline int32_t DataInitialization::getValue<int32_t, InitMode::RandomNarrow>()
         {
             return getValue<int32_t, InitMode::Random>();
-        }
-
-        template <>
-        inline Int8x4 DataInitialization::getValue<Int8x4, InitMode::RandomNarrow>()
-        {
-            return getValue<Int8x4, InitMode::Random>();
         }
 
         template <>

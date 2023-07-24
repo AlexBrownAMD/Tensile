@@ -48,7 +48,6 @@ using InputTypes = ::testing::Types<std::tuple<float>,
                                     std::tuple<std::complex<float>>,
                                     std::tuple<std::complex<double>>,
                                     std::tuple<int8_t>,
-                                    std::tuple<Tensile::Int8x4>,
                                     std::tuple<int32_t>>;
 
 TYPED_TEST_SUITE(TypedDataTypesTest, InputTypes);
@@ -88,7 +87,6 @@ static_assert(Tensile::TypeInfo<std::complex<double>>::Enum == Tensile::DataType
               "ComplexDouble");
 static_assert(Tensile::TypeInfo<Tensile::Half>::Enum == Tensile::DataType::Half, "Half");
 static_assert(Tensile::TypeInfo<int8_t>::Enum == Tensile::DataType::Int8, "Int8");
-static_assert(Tensile::TypeInfo<Tensile::Int8x4>::Enum == Tensile::DataType::Int8x4, "Int8x4");
 static_assert(Tensile::TypeInfo<int32_t>::Enum == Tensile::DataType::Int32, "Int32");
 static_assert(Tensile::TypeInfo<Tensile::BFloat16>::Enum == Tensile::DataType::BFloat16,
               "BFloat16");
@@ -101,7 +99,6 @@ static_assert(Tensile::TypeInfo<std::complex<float>>::Packing == 1, "ComplexFloa
 static_assert(Tensile::TypeInfo<std::complex<double>>::Packing == 1, "ComplexDouble");
 static_assert(Tensile::TypeInfo<Tensile::Half>::Packing == 1, "Half");
 static_assert(Tensile::TypeInfo<int8_t>::Packing == 1, "Int8");
-static_assert(Tensile::TypeInfo<Tensile::Int8x4>::Packing == 4, "Int8x4");
 static_assert(Tensile::TypeInfo<int32_t>::Packing == 1, "Int32");
 static_assert(Tensile::TypeInfo<Tensile::BFloat16>::Packing == 1, "BFloat16");
 static_assert(Tensile::TypeInfo<Tensile::Float8>::Packing == 1, "Float8");
@@ -146,5 +143,4 @@ INSTANTIATE_TEST_SUITE_P(DataTypesTest,
                                            Tensile::DataType::Float8,
                                            Tensile::DataType::BFloat8,
                                            Tensile::DataType::Int8,
-                                           Tensile::DataType::Int8x4,
                                            Tensile::DataType::Int32));

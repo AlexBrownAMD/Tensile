@@ -1015,11 +1015,6 @@ namespace Tensile
             return solveTyped(problem, typedInputs, hardware);
         }
 #endif // TENSILE_USE_HALF
-        case ContractionInputs_I8x4_I32_I32::TypeId():
-        {
-            auto const& typedInputs = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
-            return solveTyped(problem, typedInputs, hardware);
-        }
         case ContractionInputs_I32_I32_I32::TypeId():
         {
             auto const& typedInputs = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);

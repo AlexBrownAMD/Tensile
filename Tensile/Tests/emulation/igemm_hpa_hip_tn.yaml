@@ -14,7 +14,7 @@ BenchmarkProblems:
   - # hgemm TN
     - # ProblemType
       OperationType: GEMM
-      DataType: 4xi8
+      DataType: i8
       DestDataType: I
       HighPrecisionAccumulate: True
       TransposeA: True

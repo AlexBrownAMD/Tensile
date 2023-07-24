@@ -39,7 +39,6 @@
 #include <Tensile/DataTypes_Float8_BFloat8.hpp>
 #include <Tensile/DataTypes_Half.hpp>
 #include <Tensile/DataTypes_Int8.hpp>
-#include <Tensile/DataTypes_Int8x4.hpp>
 #include <Tensile/DataTypes_XFloat32.hpp>
 
 namespace Tensile
@@ -66,7 +65,6 @@ namespace Tensile
         ComplexFloat,
         ComplexDouble,
         Half,
-        Int8x4,
         Int32,
         BFloat16,
         Int8,
@@ -180,11 +178,6 @@ namespace Tensile
     template <>
     struct TypeInfo<std::complex<double>>
         : public BaseTypeInfo<std::complex<double>, DataType::ComplexDouble, 1, true, false>
-    {
-    };
-
-    template <>
-    struct TypeInfo<Int8x4> : public BaseTypeInfo<Int8x4, DataType::Int8x4, 4, false, true>
     {
     };
 

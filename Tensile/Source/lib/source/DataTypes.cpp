@@ -48,8 +48,6 @@ namespace Tensile
             return "ComplexDouble";
         case DataType::Half:
             return "Half";
-        case DataType::Int8x4:
-            return "Int8x4";
         case DataType::Int32:
             return "Int32";
         case DataType::BFloat16:
@@ -82,8 +80,6 @@ namespace Tensile
             return "Z";
         case DataType::Half:
             return "H";
-        case DataType::Int8x4:
-            return "4xi8";
         case DataType::Int32:
             return "I";
         case DataType::BFloat16:
@@ -130,7 +126,6 @@ namespace Tensile
         registerTypeInfo<std::complex<float>>();
         registerTypeInfo<std::complex<double>>();
         registerTypeInfo<Half>();
-        registerTypeInfo<Int8x4>();
         registerTypeInfo<int32_t>();
         registerTypeInfo<BFloat16>();
         registerTypeInfo<int8_t>();
@@ -206,8 +201,6 @@ namespace Tensile
             t = DataType::ComplexDouble;
         else if(strValue == ToString(DataType::Half))
             t = DataType::Half;
-        else if(strValue == ToString(DataType::Int8x4))
-            t = DataType::Int8x4;
         else if(strValue == ToString(DataType::Int32))
             t = DataType::Int32;
         else if(strValue == ToString(DataType::Int8))

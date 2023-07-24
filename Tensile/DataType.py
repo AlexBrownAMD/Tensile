@@ -331,8 +331,6 @@ class DataType:
         return self.value == DataType.half
     def isInt32(self):
         return self.value == DataType.int32
-    def isInt8x4(self):
-        return self.value == DataType.int8x4
     def isInt8(self):
         return self.value == DataType.int8
     def isBFloat16(self):

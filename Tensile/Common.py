@@ -395,12 +395,11 @@ validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
 #   - GEMM_EX (BBS): [B/B/ B/B/ S/S]
 #   - GEMM_EX (BSS): [B/B/ S/S/ S/S]
 #   - GEMM_EX (I8II): [I8/I8/ I/I/ I/I]
-#   - GEMM_EX (4xi8II): [4xi8/4xi8/ I/I/ I/I], tensile packs 4 i8 to 4xi8 with some restrictions
 # This is used in SolutionStruct.py::checkIfSupportedGEMMType()
 validGEMMTypes = [ ('D','D','D'), ('S','S','S'), ('Z','Z','Z'), ('C','C','C'), \
                    ('H','H','H'), ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), \
-                   ('I8','I','I'), ('4xi8','I','I'), \
+                   ('I8','I','I'), \
                    ('F8','S','S'), ('B8','S','S'), \
                    ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
                    ('F8','F8','S'), ('B8','B8','S'), \
@@ -411,7 +410,7 @@ validGEMMTypes = [ ('D','D','D'), ('S','S','S'), ('Z','Z','Z'), ('C','C','C'), \
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, Tc, and To are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
-HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), ('4xi8','I','I'), \
+HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), \
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \

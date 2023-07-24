@@ -154,8 +154,8 @@ using InputTypes = ::testing::Types<TypedContractionInputs<float>,
                                     ContractionInputs_B_B_S,
                                     TypedContractionInputs<std::complex<float>>,
                                     TypedContractionInputs<std::complex<double>>,
-                                    TypedContractionInputs<Int8x4, Int8x4, int32_t>,
-                                    TypedContractionInputs<int32_t>>;
+                                    TypedContractionInputs<int32_t>,
+                                    TypedContractionInputs<int8_t, int8_t, int32_t>>;
 
 TYPED_TEST_SUITE(DataInitializationTest, InputTypes);
 
@@ -289,12 +289,19 @@ TEST(DataInitializationTest, BadValues_int32)
     EXPECT_EQ(DataInitialization::isBadOutput(value), true);
 }
 
-TEST(DataInitializationTest, BadValues_Int8x4)
+TEST(DataInitializationTest, BadValues_int8)
 {
-    auto maxval = std::numeric_limits<int8_t>::max();
-    auto minval = std::numeric_limits<int8_t>::min();
-    EXPECT_EQ(Int8x4(maxval, maxval, maxval, maxval),
-              DataInitialization::getValue<Int8x4>(InitMode::BadInput));
-    EXPECT_EQ(Int8x4(minval, minval, minval, minval),
-              DataInitialization::getValue<Int8x4>(InitMode::BadOutput));
+    int8_t value = 1;
+    EXPECT_EQ(DataInitialization::isBadInput(value), false);
+    EXPECT_EQ(DataInitialization::isBadOutput(value), false);
+
+    value = DataInitialization::getValue<int8_t>(InitMode::BadInput);
+    EXPECT_EQ(std::numeric_limits<int8_t>::max(), value);
+    EXPECT_EQ(DataInitialization::isBadInput(value), true);
+    EXPECT_EQ(DataInitialization::isBadOutput(value), false);
+
+    value = DataInitialization::getValue<int8_t>(InitMode::BadOutput);
+    EXPECT_EQ(std::numeric_limits<int8_t>::min(), value);
+    EXPECT_EQ(DataInitialization::isBadInput(value), false);
+    EXPECT_EQ(DataInitialization::isBadOutput(value), true);
 }

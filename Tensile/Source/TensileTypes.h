@@ -181,7 +181,6 @@ using tensile_double_complex = tensile_complex<double>;
 #define TensileComplexDouble tensile_double_complex
 #endif // HIP
 
-#define TensileInt8x4 uint32_t
 #define TensileInt32 int32_t
 
 /*******************************************************************************

@@ -964,7 +964,6 @@ class KernelWriterAssembly(KernelWriter):
     #               : hgemm  + !HPA ([H/H/H] compute = internal = f16)
     #               : hgemm  +  HPA ([H/H/S] or [H/S/S] compute = internal = f32)
     #               : bfgemm +  HPA ([B/B/S] or [H/S/S] compute = internal = f32)
-    #               : int8x4-gemm   (internal = i32)
     self.bpeCinternal = int(self.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
     if kernel["_GlobalAccumulation"]:
@@ -982,9 +981,8 @@ class KernelWriterAssembly(KernelWriter):
     # HPA not allowed in dgemm, cgemm, zgemm, sgemm
     if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
        not (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
-          kernel["ProblemType"]["DataType"].isInt8x4() or kernel["ProblemType"]["DataType"].isInt8() or \
-          kernel["ProblemType"]["DataType"].is8bitFloat()):
-        print("HighPrecisionAccumulate only valid when DataType is half, bf16, Int8x4, Int8, fp8, bf8. Forcing HPA to False")
+          kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
+        print("HighPrecisionAccumulate only valid when DataType is half, bf16, Int8, fp8, bf8. Forcing HPA to False")
         kernel["ProblemType"]["HighPrecisionAccumulate"] = False
 
     assert self.bpeAB == tPA["bpe"]
@@ -6875,15 +6873,6 @@ class KernelWriterAssembly(KernelWriter):
             imod.addInst("s_setprio ","1","Raise priority while processing macs")
             doOnce = True
 
-    # integer i8x4
-    elif kernel["ProblemType"]["DataType"].isInt8x4():
-      for blockB in range(0, kernel["ThreadTile1"]):
-        for blockA in range(0, kernel["ThreadTile0"]):
-          imod.addCode(Code.MacInst(kernel,blockA,blockB,bufferIdx,iuiCount))
-          if beAggressive and not doOnce:
-            imod.addInst("s_setprio ","1","Raise priority while processing macs")
-            doOnce = True
-
     # single precision
     elif kernel["ProblemType"]["DataType"].isSingle():
       for blockB in range(0, kernel["ThreadTile1"]):
@@ -11998,7 +11987,7 @@ class KernelWriterAssembly(KernelWriter):
           if sumIdxV%2:
             kStr += inst("v_pk_mul_f16", vgpr("ValuC+%u"%(sumIdxV//2)), sgpr("Alpha"), vgpr("ValuC+%u"%(sumIdxV//2)), "*= alpha sumIdx=%u vi=%u"%(elementSumIdx[elementIdx], vi))
 
-        # Int8 (TODO- Int8x4 not checked, but should be OK)
+        # Int8
         elif kernel["ProblemType"]["ComputeDataType"].isInt32():
           # below assume we use v_mul_lo_u32. Could also use v_mul_i32_i24.
           # kStr += inst("v_mul_i32_i24", vgpr("ValuC+%u"%sumIdxV), sgpr("Alpha"), vgpr("ValuC+%u"%sumIdxV), "*= alpha" )
@@ -12613,7 +12602,7 @@ class KernelWriterAssembly(KernelWriter):
       for elementIdx in range(0, len(batchElements)):
         for vi in range(0, gwvw):
           sumIdxV = ss.elementSumIdx[elementIdx] + vi
-          # covers sgemm, gemm_ex(HHS/HSS/BBS/BSS (HPA=T)), int8 (int8x4?)
+          # covers sgemm, gemm_ex(HHS/HSS/BBS/BSS (HPA=T)), int8
           if kernel["ProblemType"]["ComputeDataType"].isInt32() or \
              kernel["ProblemType"]["ComputeDataType"].isSingle(): # covers sgemm/gemm_ex(HHS/HSS/BBS/BSS)
               if self.db["ForceExpectedValue"]:

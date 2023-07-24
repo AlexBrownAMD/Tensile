@@ -4365,10 +4365,10 @@ class Solution(collections.abc.Mapping):
 
     state["AssignedDerivedParameters"] = True
 
-    # UnrollLoopEfficiencyEnable does not work with f16/bf16/int8x4
-    if globalParameters["UnrollLoopEfficiencyEnable"] and (state["ProblemType"]["DataType"].isHalf() or \
-       state["ProblemType"]["DataType"].isBFloat16() or state["ProblemType"]["DataType"].isInt8x4()):
-      reject(state, "UnrollLoopEfficiencyEnable does not support f16/bf16/int8x4")
+    # UnrollLoopEfficiencyEnable does not work with f16/bf16
+    if globalParameters["UnrollLoopEfficiencyEnable"] and \
+       (state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()):
+      reject(state, "UnrollLoopEfficiencyEnable does not support f16/bf16")
 
     # UnrollLoopEfficiencyEnable supports only ThreadTile0,1=[6,4] or [4,6] or [4,4] or [6.6] or [8,4] or [4,8]
     if globalParameters["UnrollLoopEfficiencyEnable"] and \

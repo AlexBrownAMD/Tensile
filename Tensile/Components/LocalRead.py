@@ -106,10 +106,6 @@ class LocalReadVALU(LocalRead):
                         localReadCode.addInst("s_mov_b32", sgpr(tmpSgpr), hex(0x01010101),"CheckValue1: INT8")   # packed 1s
                         localReadCode.addCode(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
 
-                    # TODO - Check if this works
-                    elif kernel["ProblemType"]["DataType"].isInt8x4():
-                        localReadCode.addCode(writer.assert_eq( dbgVgpr, 1))
-
                     elif kernel["ProblemType"]["DataType"].isSingle():
                         localReadCode.addCode(writer.assert_eq( dbgVgpr, 1.0) )
     
@@ -344,11 +340,6 @@ class LocalReadMFMA(LocalRead):
                                 hexValue = hex(0x00010000) if isHigh16Bits else hex(0x00000001)
                                 localReadCode.addInst("s_mov_b32", sgpr(tmpSgpr), hexValue,"CheckValue1: INT8")
                                 localReadCode.addCode(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
-
-                        # TODO - Check if this works. But need this? MFMA would use INT8
-                        elif kernel["ProblemType"]["DataType"].isInt8x4():
-                            localReadCode.addInst("s_mov_b32", sgpr(tmpSgpr), hex(0x01010101),"CheckValue1: INT8x4")
-                            localReadCode.addCode(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
 
                         elif kernel["ProblemType"]["DataType"].isSingle():
                             localReadCode.addCode(writer.assert_eq( dbgVgpr, 1.0) )

@@ -285,11 +285,6 @@ namespace Tensile
                 return GetTyped<ContractionInputs_H_S_S>(args, problemFactory, maxWorkspaceSize);
             }
 #endif // TENSILE_USE_HALF
-            case ContractionInputs_I8x4_I32_I32::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8x4_I32_I32>(
-                    args, problemFactory, maxWorkspaceSize);
-            }
             case ContractionInputs_I32_I32_I32::TypeId():
             {
                 return GetTyped<ContractionInputs_I32_I32_I32>(

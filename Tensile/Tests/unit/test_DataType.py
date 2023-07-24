@@ -57,10 +57,10 @@ def test_init_half():
     assert DataType('tensileDataTypeHalf') == expected
 
 def test_init_i8():
-    expected = DataType('4xi8')
-    assert DataType('int8x4') == expected
-    assert DataType('Int8x4') == expected
-    assert DataType('tensileDataTypeInt8x4') == expected
+    expected = DataType('I8')
+    assert DataType('int8') == expected
+    assert DataType('Int8') == expected
+    assert DataType('tensileDataTypeInt8') == expected
 
 def test_init_i32():
     expected = DataType('I')
@@ -134,22 +134,8 @@ def test_half():
     assert obj.numBytes() == 2
     assert obj.isReal()
 
-def test_int8():
-    obj = DataType(5)
-    assert obj.toChar() == '4xi8'
-    assert obj.toName() == 'int8x4'
-    assert obj.toEnum() == 'Int8x4'
-    assert obj.toOpenCL() == 'ERROR'
-    assert obj.toHIP() == 'uint32_t'
-    assert obj.toDevice("OCL") == 'ERROR'
-    assert obj.toDevice("") == 'uint32_t'
-    assert obj.toCpp() == 'TensileInt8x4'
-    assert obj.getLibString() == 'tensileDataTypeInt8x4'
-    assert obj.numBytes() == 4
-    assert obj.isReal()
-
 def test_int32():
-    obj = DataType(6)
+    obj = DataType(5)
     assert obj.toChar() == 'I'
     assert obj.toName() == 'int32'
     assert obj.toEnum() == 'Int32'
@@ -162,13 +148,27 @@ def test_int32():
     assert obj.numBytes() == 4
     assert obj.isReal()
 
+def test_int8():
+    obj = DataType(7)
+    assert obj.toChar() == 'I8'
+    assert obj.toName() == 'int8'
+    assert obj.toEnum() == 'Int8'
+    assert obj.toOpenCL() == 'ERROR'
+    assert obj.toHIP() == 'int8_t'
+    assert obj.toDevice("OCL") == 'ERROR'
+    assert obj.toDevice("") == 'int8_t'
+    assert obj.toCpp() == 'TensileInt8'
+    assert obj.getLibString() == 'tensileDataTypeInt8'
+    assert obj.numBytes() == 1
+    assert obj.isReal()
+
 def test_cmp():
     assert DataType('single') == DataType('S')
     assert not DataType('S') != DataType(0)
     assert DataType('Float') < DataType('Double')
     assert not DataType('tensileDataTypeFloat') > DataType('Z')
     assert DataType('half') >= DataType('ComplexFloat')
-    assert not DataType('int32') <= DataType('tensileDataTypeInt8x4')
+    assert not DataType('int32') <= DataType('tensileDataTypeHalf')
 
 def test_bounds():
     with pytest.raises(Exception):

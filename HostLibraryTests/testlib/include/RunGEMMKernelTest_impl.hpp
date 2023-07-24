@@ -46,7 +46,6 @@ auto RunGEMMKernelTestParams<DeviceBackend>::TypedTests()
     //    = std::make_shared<TypedGEMMKernelTest<ContractionInputs_D_D_D>>();
     //     static auto testCFloat = std::make_shared<TypedGEMMKernelTest<ComplexContractionInputs_S_S_S>>();
     //     static auto testCDouble = std::make_shared<TypedGEMMKernelTest<ComplexContractionInputs_D_D_D>>();
-    //     static auto testInt8x4 = std::make_shared<TypedGEMMKernelTest<ContractionInputs_I8_I32_I32>>();
     //     static auto testInt32 = std::make_shared<TypedGEMMKernelTest<ContractionInputs_I32_I32_I32>>();
     //     static auto testHalf = std::make_shared<TypedGEMMKernelTest<ContractionInputs_H_H_H>>();
     // #ifdef TENSILE_USE_BF16
@@ -57,7 +56,6 @@ auto RunGEMMKernelTestParams<DeviceBackend>::TypedTests()
         // testDouble,
         //         testCFloat,
         //         testCDouble,
-        //         testInt8x4,
         //         testInt32,
         //         testHalf,
         // #ifdef TENSILE_USE_BF16

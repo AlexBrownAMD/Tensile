@@ -1276,7 +1276,6 @@ namespace Tensile
     template struct TypedContractionInputs<double>;
     template struct TypedContractionInputs<std::complex<float>>;
     template struct TypedContractionInputs<std::complex<double>>;
-    template struct TypedContractionInputs<Int8x4, Int8x4, int32_t, int32_t>;
     template struct TypedContractionInputs<int32_t>;
     template struct TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
 
