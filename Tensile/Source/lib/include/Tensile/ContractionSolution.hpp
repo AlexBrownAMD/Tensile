@@ -288,6 +288,16 @@ namespace Tensile
                                                int                gsuUnrollUnit,
                                                Hardware const&    hardware) const;
 
+        template <typename TypedInputs, bool T_Debug>
+        KernelInvocation generateStreamKFixupCall(Problem const&     problem,
+                                                  TypedInputs const& inputs,
+                                                  Hardware const&    hardware) const;
+
+        template <typename TypedInputs>
+        std::string streamKFixupKernelName(Problem const&     problem,
+                                           TypedInputs const& inputs,
+                                           Hardware const&    hardware) const;
+
         bool canSolve(Problem const& problem, Hardware const& hardware) const;
 
         bool matchesProblemType(Problem const& problem, Hardware const& hardware) const;

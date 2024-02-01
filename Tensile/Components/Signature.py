@@ -214,6 +214,8 @@ class SignatureDefault(Signature):
         if kernel["StreamK"] == 2 or kernel["StreamK"] == 3:
             kStr += self.addArgument(                          'WS',     '8', offset, "global_buffer", dstValueType, "generic"); offset += 8
             kStr += self.addArgument(                       'Flags',     '8', offset, "global_buffer", dstValueType, "generic"); offset += 8
+        if kernel["StreamK"] == 4:
+            kStr += self.addArgument(                          'WS',     '8', offset, "global_buffer", dstValueType, "generic"); offset += 8
 
         if not kernel["ProblemType"]["StridedBatched"]:
             kStr += self.addArgument("OffsetD", '8', offset, "by_value", "u64"); offset += 8
@@ -293,7 +295,7 @@ class SignatureDefault(Signature):
             kStr += self.addArgument("MagicShiftItersPerTile",  '4', offset,"by_value", "u32"); offset += 4
             kStr += self.addArgument("TotalIters",              '4', offset,"by_value", "u32"); offset += 4
             kStr += self.addArgument("SKItersPerWG",            '4', offset,"by_value", "u32"); offset += 4
-            if kernel["StreamK"] == 3: # Two-tile SK
+            if kernel["StreamK"] >= 3: # Two-tile SK
                 kStr += self.addArgument("skGrid",              '4', offset,"by_value", "u32"); offset += 4
                 kStr += self.addArgument("skTiles",             '4', offset,"by_value", "u32"); offset += 4
                 kStr += self.addArgument("skExtraIters",        '4', offset,"by_value", "u32"); offset += 4

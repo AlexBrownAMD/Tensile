@@ -421,10 +421,13 @@ namespace Tensile
         {
             // StreamK workspace + flags
             rv.args.append<void const*>("ws", inputs.ws);
-            void*  ws          = inputs.ws;
-            size_t flagsOffset = partialTileSize(skGrid);
-            void*  flags       = (void*)(static_cast<char*>(ws) + flagsOffset);
-            rv.args.append<void*>("Flags", flags);
+            if(sizeMapping.streamK == 2 || sizeMapping.streamK == 3)
+            {
+                void*  ws          = inputs.ws;
+                size_t flagsOffset = partialTileSize(skGrid);
+                void*  flags       = (void*)(static_cast<char*>(ws) + flagsOffset);
+                rv.args.append<void*>("Flags", flags);
+            }
         }
 
         if(!problemType.stridedBatched)
@@ -641,7 +644,7 @@ namespace Tensile
                     uint32_t itersPerWave = CeilDivide(totalIters, rv.numWorkGroups.x);
                     rv.args.append<uint32_t>("SKItersPerWG", itersPerWave);
                 }
-                else if(sizeMapping.streamK == 3) // Two-tile SK
+                else if(sizeMapping.streamK >= 3) // Two-tile SK
                 {
                     bool bigEnough = tiles > skGrid;
                     // skTiles is number of Stream-K tiles to complete
@@ -1132,6 +1135,64 @@ namespace Tensile
         return name;
     }
 
+    
+    template <typename TypedInputs, bool T_Debug>
+    KernelInvocation ContractionSolution::generateStreamKFixupCall(
+        Problem const& problem, TypedInputs const& inputs, Hardware const& hardware) const
+    {
+        TensorDescriptor const& c = problem.c();
+        TensorDescriptor const& d = problem.d();
+
+        KernelInvocation rv;
+
+        rv.args = KernelArguments(T_Debug);
+
+        // rv.args.reserve(512, 64);
+
+        // rv.kernelName = streamKInitKernelName(problem, inputs, hardware);
+
+        // rv.workGroupSize.x = 256;
+        // rv.workGroupSize.y = 1;
+        // rv.workGroupSize.z = 1;
+
+        // auto   tiles  = problem.getNumTiles(sizeMapping);
+        // size_t skGrid = getSKGrid(hardware, tiles);
+        // size_t wiZ    = 1;
+        // for(size_t i = 0; i < problem.batchIndices().size(); i++)
+        //     wiZ *= problem.batchSize(i);
+        // size_t flagCount = skGrid * wiZ;
+
+        // rv.numWorkGroups.x = CeilDivide(flagCount, rv.workGroupSize.x);
+        // rv.numWorkGroups.y = 1;
+        // rv.numWorkGroups.z = 1;
+
+        // rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
+        // rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
+        // rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
+
+        // void*  ws          = inputs.ws;
+        // size_t flagsOffset = partialTileSize(skGrid);
+        // void*  flags       = (void*)(static_cast<char*>(ws) + flagsOffset);
+        // rv.args.append<void*>("Flags", flags);
+
+        // rv.args.append<uint32_t>("flagCount", flagCount);
+
+        // //Pass along code object dependency
+        // // TODO check this
+        // rv.codeObjectFile = codeObjectFilename.load();
+
+        return rv;
+    }
+
+    template <typename TypedInputs>
+    std::string ContractionSolution::streamKFixupKernelName(Problem const&     problem,
+                                                           TypedInputs const& inputs,
+                                                           Hardware const&    hardware) const
+    {
+        std::string name = concatenate("SKFixup", "_", TypeInfo<typename TypedInputs::DType>::Abbrev());
+        return name;
+    }
+
     template <typename TypedInputs>
     std::vector<KernelInvocation> ContractionSolution::solveTyped(Problem const&     problem,
                                                                   TypedInputs const& inputs,
@@ -1185,7 +1246,7 @@ namespace Tensile
 
         std::vector<KernelInvocation> rv;
 
-        if(sizeMapping.streamK >= 2)
+        if(sizeMapping.streamK == 2 || sizeMapping.streamK == 3)
         {
             if(debug)
                 rv.push_back(generateStreamKInitCall<TypedInputs, true>(problem, inputs, hardware));
@@ -1218,6 +1279,14 @@ namespace Tensile
                 rv.push_back(
                     generateOutputConversionCall<TypedInputs, false>(problem, inputs, hardware));
         }
+
+        // if(sizeMapping.streamK == 4)
+        // {
+        //     if(debug)
+        //         rv.push_back(generateStreamKFixupCall<TypedInputs, true>(problem, inputs, hardware));
+        //     else
+        //         rv.push_back(generateStreamKFixupCall<TypedInputs, false(problem, inputs, hardware));
+        // }
 
         return rv;
     }
@@ -1529,10 +1598,13 @@ namespace Tensile
             size_t skGrid = getSKGrid(hardware, tiles);
             // Get space required for partial tiles
             size += partialTileSize(skGrid);
-            // Add space for flags
-            // Flags for partial tiles - dword per flag for fast addressing and comparisons
-            size += skGrid * 4;
-            // size *= batches; // TODO need tile and flag per batch
+
+            if(sizeMapping.streamK == 2 || sizeMapping.streamK == 3)            
+            {
+                // Add space for flags
+                // Flags for partial tiles - dword per flag for fast addressing and comparisons
+                size += skGrid * 4;
+            }
         }
         else
             size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC;
@@ -1562,7 +1634,6 @@ namespace Tensile
         size_t tileSize
             = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
         size += tileSize * skGrid; // Partials tile per WG
-        // TODO batches
         // TODO round up for alignment?
 
         return size;

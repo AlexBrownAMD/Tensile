@@ -33,6 +33,7 @@ from .DataType import DataType
 from .Utils import roundUpToNearestMultiple
 
 from .KernelWriterStreamKInit import KernelWriterStreamKInit
+from .KernelWriterStreamKFixup import KernelWriterStreamKFixup
 from .KernelWriterBetaOnly import KernelWriterBetaOnly
 from .KernelWriterConversion import KernelWriterConversion
 
@@ -1783,6 +1784,7 @@ class Solution(collections.abc.Mapping):
   # create Helper Kernels
   def initHelperKernelObjects(self):
     self.initStreamKInitKernelObjects()
+    self.initStreamKFixupKernelObjects()
     self.initBetaOnlyKernelObjects()
     self.initConversionKernelObjects()
 
@@ -1797,6 +1799,18 @@ class Solution(collections.abc.Mapping):
       state["KernelLanguage"] = "Source"
       state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
       self.streamKInitKernelObjects.append(KernelWriterStreamKInit(state))
+
+
+  ########################################
+  # create StreamKFixup Kernels
+  def initStreamKFixupKernelObjects(self):
+    self.streamKFixupKernelObjects = []
+    if self["StreamK"] == 4:
+      state = {}
+      state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["KernelLanguage"] = "Source"
+      state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+      self.streamKFixupKernelObjects.append(KernelWriterStreamKFixup(state))
 
 
   ########################################
@@ -1860,14 +1874,17 @@ class Solution(collections.abc.Mapping):
   ########################################
   # get Helper Kernels
   def getHelperKernelObjects(self):
-    return self.streamKInitKernelObjects + self.betaOnlyKernelObjects + self.conversionKernelObjects
-
+    return self.streamKInitKernelObjects + self.streamKFixupKernelObjects + self.betaOnlyKernelObjects + self.conversionKernelObjects
 
   ########################################
   # get Helper Kernels
   def getKernelStreamKInitObjects(self):
     return self.streamKInitKernelObjects
 
+  ########################################
+  # get Helper Kernels
+  def getKernelStreamKFixupObjects(self):
+    return self.streamKFixupKernelObjects
 
   ########################################
   # get Helper Kernels
@@ -2944,7 +2961,7 @@ class Solution(collections.abc.Mapping):
       state["_GlobalAccumulation"] = None
       state["_WorkspaceSizePerElemC"] = 0
 
-      if state["StreamK"] == 2 or state["StreamK"] == 3:
+      if state["StreamK"] >= 2:
         # StreamK Workspace size
         computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
         state["_GlobalAccumulation"] = 'PartialsBuffer'

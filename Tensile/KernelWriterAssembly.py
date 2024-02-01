@@ -572,7 +572,7 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("StreamKIterEnd", 1)
       self.defineSgpr("StreamKLocalStart", 1)
       self.defineSgpr("StreamKLocalEnd", 1)
-    if kernel["StreamK"] == 2 or kernel["StreamK"] == 3:
+    if kernel["StreamK"] >= 2:
       self.defineSgpr("SrdWS", 4, 4)
 
     if kernel["PackSummationDims"] and kernel["GlobalSplitU"]>1:
@@ -1876,6 +1876,9 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("AddressWS", numSgprAddressWS)
       self.defineSgpr("AddressFlags", numSgprAddressFlags)
       self.argOffsetOffset += (numSgprAddressWS + numSgprAddressFlags) * 4
+    if kernel["StreamK"] == 4: # Separate fixup kernel doesnt require flags
+      self.defineSgpr("AddressWS", numSgprAddressWS)
+      self.argOffsetOffset += numSgprAddressWS * 4
 
     if not kernel["ProblemType"]["StridedBatched"]:
       self.numSgprOffsetD = 2
@@ -1953,7 +1956,7 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("TotalIters", 1)
       self.defineSgpr("SKItersPerWG", 1)
       skArgumentToLoad += 9
-      if kernel["StreamK"] == 3: # Two-tile SK
+      if kernel["StreamK"] == 3 or kernel["StreamK"] == 4: # Two-tile SK
         self.defineSgpr("skGrid", 1)
         self.defineSgpr("skTiles", 1)
         self.defineSgpr("skExtraIters", 1)
@@ -1994,7 +1997,8 @@ class KernelWriterAssembly(KernelWriter):
           self.defineSgpr("LocalWriteAddrB", 1)
 
     self.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + \
-      ((numSgprAddressWS + numSgprAddressFlags) if kernel["StreamK"] >= 2 else 0) + \
+      (numSgprAddressWS if kernel["StreamK"] >= 2 else 0) + \
+      (numSgprAddressFlags if (kernel["StreamK"] == 2 or kernel["StreamK"] == 3) else 0) + \
       numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.numSgprStridesD + self.numSgprStridesC + self.numSgprStridesA + \
       self.numSgprStridesB + self.numSgprSizesFree + self.numSgprSizesSum + \
@@ -3728,7 +3732,7 @@ class KernelWriterAssembly(KernelWriter):
           kStr += self.longBranchScc0("label_%04u" % (self.getLabelNum("KernelEnd")), positiveOnly=True)
           # kStr += inst("s_cbranch_scc0", "label_%04u" % (self.getLabelNum("KernelEnd")), "edge case that work doesn't divide well")        
           kStr += self.undefineSgpr("TotalIters")
-        elif kernel["StreamK"] == 3: # Two-tile SK
+        elif kernel["StreamK"] >= 3: # Two-tile SK
           # iter count after all extra iters have been distributed
           kStr += inst("s_mul_i32", sgpr("StreamKIter"), sgpr("StreamKIdx"), sgpr("SKItersPerWG"), "StreamK starting iteration (case: after extra iters)")
           kStr += inst("s_add_u32", sgpr("StreamKIter"), sgpr("StreamKIter"), sgpr("skExtraIters"), "Add extra iters")
@@ -3789,7 +3793,7 @@ class KernelWriterAssembly(KernelWriter):
       kStr += inst("s_min_u32", sgpr("StreamKLocalEnd"), sgpr("StreamKIterEnd"), sgpr(stmp+2), "1. (Local) iteration end (SK tile)")
       kStr += inst("s_sub_u32", sgpr("StreamKLocalEnd"), sgpr("StreamKLocalEnd"), sgpr(stmp+1), "2. Local iteration end (SK tile)")
 
-      if kernel["StreamK"] == 3: # Two-tile algorithm
+      if kernel["StreamK"] >= 3: # Two-tile algorithm
         # local end (DP tile)
         kStr += inst("s_sub_u32", sgpr(stmp+3), sgpr(stmp+2), sgpr(stmp+1), "Local iteration end (DP tile)")
         # select correct local end
@@ -12848,13 +12852,14 @@ class KernelWriterAssembly(KernelWriter):
     if self.canOptimizePreLoopLWVmcnt:
       kStr += PreLoopVmcntCaseStr
 
-    # Set flag
-    kStr += inst("s_waitcnt", "vmcnt(0)", "wait for data store")
-    kStr += inst("s_barrier", "store all data before setting flag")
-    kStr += inst("s_lshl_b32", sgpr(tmpSgpr), sgpr("StreamKIdx"), log2(4), "flag offset based on CTA index")
-    kStr += inst("s_mov_b32", sgpr(tmpSgpr+2), 1, "flag data")
-    kStr += inst("s_store_dword", sgpr(tmpSgpr+2), sgpr("AddressFlags", 2), sgpr(tmpSgpr), "glc", "set flag")
-    kStr += inst("s_waitcnt", "lgkmcnt(0)", "wait for flag") # TODO just for testing
+    # Set flag for kernels with integrated fixup
+    if kernel["StreamK"] == 2 or kernel["StreamK"] == 3:
+      kStr += inst("s_waitcnt", "vmcnt(0)", "wait for data store")
+      kStr += inst("s_barrier", "store all data before setting flag")
+      kStr += inst("s_lshl_b32", sgpr(tmpSgpr), sgpr("StreamKIdx"), log2(4), "flag offset based on CTA index")
+      kStr += inst("s_mov_b32", sgpr(tmpSgpr+2), 1, "flag data")
+      kStr += inst("s_store_dword", sgpr(tmpSgpr+2), sgpr("AddressFlags", 2), sgpr(tmpSgpr), "glc", "set flag")
+      kStr += inst("s_waitcnt", "lgkmcnt(0)", "wait for flag") # TODO just for testing
     
     # TODO - if this is the last tile, don't need to jump to next instruction
     # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes 
@@ -13433,6 +13438,16 @@ class KernelWriterAssembly(KernelWriter):
     skPartialsLabel = self.getNamedLabelUnique("SK_Partials")
     skFixupLabel = self.getNamedLabelUnique("SK_Fixup")
     skStoreLabel = self.getNamedLabelUnique("SK_Store")
+    skSkipBetaLabel = self.getNamedLabelUnique("SK_SkipBeta")
+
+    if kernel["StreamK"] == 4:
+      # if we did not start the tile, store partials in workspace
+      kStr += inst("s_cmp_eq_u32", sgpr("StreamKLocalStart"), 0, "does wg start tile?")
+      kStr += inst("s_cbranch_scc0 %s" % skPartialsLabel, "Branch if not start tile, store partials to WS")
+      # if we did not finish the tile, store partials in output buffer, don't apply beta
+      kStr += inst("s_cmp_eq_u32", sgpr("StreamKLocalEnd"), sgpr("ItersPerTile"), "does wg finish tile?")
+      kStr += inst("s_cbranch_scc0 %s" % skSkipBetaLabel, "Branch if not finished tile, store partials to D, no beta")
+      # if we started and finished the tile, continue to regular store code
 
     if kernel["StreamK"] == 2 or kernel["StreamK"] == 3:
       # StreamK store branches
@@ -13490,6 +13505,9 @@ class KernelWriterAssembly(KernelWriter):
     if False in betas and True in betas:
       kStr += self.checkIsBetaZero(kernel, betaLabel)
 
+    if kernel["StreamK"] == 4:
+      kStr += "%s:\n" % skSkipBetaLabel
+
     for beta in betas:
       # start B1
       if beta:
@@ -13506,7 +13524,7 @@ class KernelWriterAssembly(KernelWriter):
         kStr += "%s:%s"%(writeLabels[beta][edge], self.endLine)
         kStr += self.globalWriteProcedure(kernel, vectorWidths, elements, applyAlpha, beta, edge, atomic, tmpVgpr, tmpCVTVgpr, isOptNLL, endLabel)
 
-    if kernel["StreamK"] == 2 or kernel["StreamK"] == 3:
+    if kernel["StreamK"] >= 2:
       kStr += "%s:\n" % (skPartialsLabel)
 
       fixupEdge = [False] # Temporary hack to test no edge variant
@@ -15135,7 +15153,7 @@ class KernelWriterAssembly(KernelWriter):
       kStr += inst("s_cmp_ge_u32", sgpr("StreamKIter"), sgpr(endIter), "Check if done all StreamK iterations")
       kStr += self.longBranchScc0(self.getLabelTarget("PersistentLoopStart"), negativeOnly=True)
 
-    if kernel["PersistentKernel"]: # or kernel["StreamK"]:
+    if kernel["PersistentKernel"]:
       # Persistent may generate a SerialWorkGroupIter which is OOB, only loop back if we are in a valid WG:
       stmp = self.getTmpSgpr(1).idx()
       kStr += inst("s_mul_i32", sgpr(stmp), sgpr("NumWorkGroups0"), sgpr("NumWorkGroups1"), "Total WG-0x1")
@@ -16369,7 +16387,7 @@ class KernelWriterAssembly(KernelWriter):
     acc2arch, _ = self.AccToArchMapper(kernel)
 
     complexMultiplier = 2 if kernel["ProblemType"]["DataType"].isComplex() else 1
-    streamK = (kernel["StreamK"] == 2 or kernel["StreamK"] == 3)
+    streamK = (kernel["StreamK"] >= 2)
     self.codeAccVgprRead = Code.Module("AccVgprRead")
     self.codeAccVgprRead.itemList = [None] * kernel["MIRegPerOut"] * complexMultiplier * len(acc2arch)
     if streamK:
