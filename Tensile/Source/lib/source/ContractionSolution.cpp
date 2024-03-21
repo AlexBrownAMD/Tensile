@@ -26,9 +26,14 @@
 
 #include <Tensile/ContractionSolution.hpp>
 
+#include <hip/hip_ext.h>
+#include <hip/hip_runtime.h>
+
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/Utils.hpp>
+#include <Tensile/hip/HipUtils.hpp>
+
 
 #include <cmath>
 #include <cstddef>
@@ -1607,6 +1612,44 @@ namespace Tensile
         assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
         size_t cuCount = pAMDGPU->computeUnitCount;
         size_t skGrid  = cuCount;
+        if(pAMDGPU->skDynamicGrid == 3 && tiles > skGrid)
+        {
+            hipFunction_t function;
+            // HIP_CHECK_EXC(getKernel(function, kernelName));
+            int numBlocks = sizeMapping.occupancy; //0;
+            int blockSize = 256; // rv.workGroupSize.x * rv.workGroupSize.y * rv.workGroupSize.z;
+            
+            // HIP_CHECK_EXC(hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(
+            //     &numBlocks, function, blockSize, 0));
+            // std::cout << "Dynamic 3 initial grid " << skGrid << " occupancy " << numBlocks << std::endl;
+            if(numBlocks > 1)
+            {
+                size_t maxWGs = skGrid * numBlocks;
+                size_t tilesPerCU = CeilDivide(tiles, maxWGs);
+                skGrid = CeilDivide(tiles, tilesPerCU);
+                // skGrid = tilesPerCU * numBlocks;
+                // std::cout << "maxWGs " << maxWGs << std::endl;
+                // std::cout << "tilesPerCU " << tilesPerCU << std::endl;
+                // std::cout << "skGrid " << skGrid << std::endl;
+            }
+            else
+            {
+                // If occupancy==1, use dynamic 2
+                for(size_t i = 1; i <= 32; i *= 2)
+                {
+                    size_t tilesPerCU  = CeilDivide(i * tiles, skGrid);
+                    size_t reducedGrid = CeilDivide(i * tiles, tilesPerCU);
+                    float  utilization = ((float)reducedGrid) / ((float)skGrid);
+                    if(utilization > 0.75f)
+                    {
+                        if(utilization < 1.0f)
+                            skGrid = reducedGrid;
+                        break;
+                    }
+                }
+                // std::cout << "o1 fallback " << skGrid << std::endl;
+            }
+        }
         if(pAMDGPU->skDynamicGrid == 2 && tiles > skGrid)
         {
             for(size_t i = 1; i <= 32; i *= 2)
@@ -1628,6 +1671,7 @@ namespace Tensile
             skGrid = min(skGrid, tiles);
         if(pAMDGPU->skGridMultiplier > 1)
             skGrid = skGrid * pAMDGPU->skGridMultiplier;
+        // std::cout << "Final grid " << skGrid << std::endl;
         return skGrid;
     }
 

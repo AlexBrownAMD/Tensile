@@ -1137,6 +1137,7 @@ validParameters = {
     # TENSILE_STREAMK_GRID_MULTIPLIER lets you set how many workgroups are created per CU being used.
     #   1 = 1 WG per CU (default)
     "StreamK": [0, 1, 2, 3],
+    "StreamKOccupancy": range(1,8+1),
 
     # 0  : standard launch
     # N>0 : launch persistent kernel with N workgroups per compute unit
@@ -1538,6 +1539,7 @@ defaultBenchmarkCommonParameters = [
     {"MacroTileShapeMin":         [ 1 ] },
     {"MacroTileShapeMax":         [ 64 ] },
     {"StreamK":                   [ 0 ] },
+    {"StreamKOccupancy":          [ 1 ] },
     {"PersistentKernel":          [ 0 ] },
     {"PersistentKernelAlongBatch":[ False ] },    # May be default True is better ?
     {"PackBatchDims":             [ 0 ] },
