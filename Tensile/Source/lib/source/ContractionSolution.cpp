@@ -26,13 +26,9 @@
 
 #include <Tensile/ContractionSolution.hpp>
 
-#include <hip/hip_ext.h>
-#include <hip/hip_runtime.h>
-
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/Utils.hpp>
-#include <Tensile/hip/HipUtils.hpp>
 
 
 #include <cmath>
@@ -1614,19 +1610,20 @@ namespace Tensile
         size_t skGrid  = cuCount;
         if(pAMDGPU->skDynamicGrid == 3 && tiles > skGrid)
         {
-            hipFunction_t function;
+            // hipFunction_t function;
             // HIP_CHECK_EXC(getKernel(function, kernelName));
             int numBlocks = sizeMapping.occupancy; //0;
-            int blockSize = 256; // rv.workGroupSize.x * rv.workGroupSize.y * rv.workGroupSize.z;
+            // int blockSize = 256; // rv.workGroupSize.x * rv.workGroupSize.y * rv.workGroupSize.z;
             
             // HIP_CHECK_EXC(hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(
             //     &numBlocks, function, blockSize, 0));
             // std::cout << "Dynamic 3 initial grid " << skGrid << " occupancy " << numBlocks << std::endl;
             if(numBlocks > 1)
             {
-                size_t maxWGs = skGrid * numBlocks;
-                size_t tilesPerCU = CeilDivide(tiles, maxWGs);
-                skGrid = CeilDivide(tiles, tilesPerCU);
+                skGrid *= numBlocks;
+                // size_t maxWGs = skGrid * numBlocks;
+                // size_t tilesPerCU = CeilDivide(tiles, maxWGs);
+                // skGrid = CeilDivide(tiles, tilesPerCU);
                 // skGrid = tilesPerCU * numBlocks;
                 // std::cout << "maxWGs " << maxWGs << std::endl;
                 // std::cout << "tilesPerCU " << tilesPerCU << std::endl;
@@ -1648,6 +1645,7 @@ namespace Tensile
                     }
                 }
                 // std::cout << "o1 fallback " << skGrid << std::endl;
+                skGrid = min(skGrid, tiles);
             }
         }
         if(pAMDGPU->skDynamicGrid == 2 && tiles > skGrid)
@@ -1667,7 +1665,7 @@ namespace Tensile
         }
         if(pAMDGPU->skMaxCUs > 0)
             skGrid = min(skGrid, pAMDGPU->skMaxCUs);
-        if(pAMDGPU->skDynamicGrid)
+        if(pAMDGPU->skDynamicGrid == 1 || pAMDGPU->skDynamicGrid == 2)
             skGrid = min(skGrid, tiles);
         if(pAMDGPU->skGridMultiplier > 1)
             skGrid = skGrid * pAMDGPU->skGridMultiplier;
