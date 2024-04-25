@@ -3763,6 +3763,13 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["PersistentKernel"] or kernel["StreamK"]:
       if kernel["StreamK"]:
         # Workload calculations
+        sXCC = self.sgprPool.checkOut(1, "XCC", preventOverflow=0)
+        kStr += inst("s_getreg_b32", sgpr(sXCC), "hwreg(HW_REG_XCC_ID)", "Get XCC ID")
+        kStr += inst("s_mul_i32", sgpr(sXCC), sgpr(sXCC), hex(38), "Scale XCC")
+        kStr += inst("s_lshr_b32", sgpr("WorkGroup0"), sgpr("WorkGroup0"), hex(3), "Undo round-robin")
+        kStr += inst("s_add_u32", sgpr("WorkGroup0"), sgpr("WorkGroup0"), sgpr(sXCC), "Arrange WGs by XCC")
+        self.sgprPool.checkIn(sXCC)
+
         kStr += inst("s_mov_b32", sgpr("StreamKIdx"), sgpr("WorkGroup0"), "Save original StreamK index")
         if kernel["StreamK"] == 1: # Basic SK
           kStr += inst("s_mul_i32", sgpr("StreamKIter"), sgpr("StreamKIdx"), sgpr("SKItersPerWG"), "StreamK starting iteration")
