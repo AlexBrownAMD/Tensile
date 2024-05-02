@@ -205,6 +205,7 @@ namespace Tensile
         * Calculate required workspace size.
         */
         size_t       requiredWorkspaceSize(Problem const& problem, Hardware const& hardware) const;
+        size_t       getSKTiles(uint32_t tiles, uint32_t skGrid) const;
         size_t       getSKGrid(Hardware const& hardware, size_t tiles) const;
         size_t       partialTileSize(size_t skGrid) const;
         static float computeGranularity(float x);
@@ -255,7 +256,8 @@ namespace Tensile
         template <typename TypedInputs, bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&     problem,
                                             TypedInputs const& inputs,
-                                            Hardware const&    hardware) const;
+                                            Hardware const&    hardware,
+                                            bool               skPass = false) const;
 
         template <typename TypedInputs, bool T_Debug>
         KernelInvocation generateStreamKInitCall(Problem const&     problem,
