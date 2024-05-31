@@ -1144,7 +1144,7 @@ validParameters = {
     # 1: uses atomics to accumulate partial tiles
     "StreamKAtomic": [0, 1],
     "StreamKXCCMapping": [0, 1],
-    "StreamKFullTiles": [0, 1],
+    "StreamKFullTiles": list(range(0, 2048)),
     # Debug settings for stream-k kernels to disable parts of the kernel
     #   Bit 0: Don't generate fixup code
     #   Bit 1: Don't generate write to partials code
